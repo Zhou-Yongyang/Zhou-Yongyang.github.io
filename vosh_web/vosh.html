@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="description"
+      content="VMesh models a scene with a triangular mesh and a sparse volume for efficient view synthesis."
+    />
+    <meta
+      name="keywords"
+      content="VMesh, NeRF, hybrid, real-time, NVS, novel view synthesis"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Vosh: Voxel-Mesh Hybrid Representation for Real-time View Synthesis
+    </title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="./static/css/bulma.min.css" />
+    <link rel="stylesheet" href="./static/css/bulma-carousel.min.css" />
+    <link rel="stylesheet" href="./static/css/bulma-slider.min.css" />
+    <link rel="stylesheet" href="./static/css/fontawesome.all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css"
+    />
+    <link rel="stylesheet" href="./static/css/index.css" />
+    <link rel="icon" href="./static/images/favicon.svg" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script defer src="./static/js/fontawesome.all.min.js"></script>
+    <script src="./static/js/bulma-carousel.min.js"></script>
+    <script src="./static/js/bulma-slider.min.js"></script>
+    <script src="./static/js/video-comparison.js"></script>
+    <script src="./static/js/index.js"></script>
+    <script src="./static/js/control.js"></script>
+  </head>
+  <body>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <a
+          role="button"
+          class="navbar-burger"
+          aria-label="menu"
+          aria-expanded="false"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered">
+            <div class="column has-text-centered">
+              <h1 class="title is-1 publication-title">
+                Vosh: Voxel-Mesh Hybrid Representation for Real-time View Synthesis
+              </h1>
+              <div class="is-size-5 publication-authors">
+                <span class="author-block">
+                  <a href="">Chen-Hao Zhang</a>,</span
+                >
+                <span class="author-block">
+                  <a href="">Yong-Yang Zhou</a>,</span
+                >
+                <span class="author-block">
+                  <a href="">Lei Zhang</a><sup>*</sup>,
+                </span>
+              </div>
+
+              <div class="is-size-5 publication-authors">
+                <span class="author-block"
+                  >Beijing Institute of Technology</span
+                >
+              </div>
+
+              <div class="column has-text-centered">
+                <div class="publication-links">
+                  <!-- PDF Link. -->
+                  <!-- <span class="link-block">
+                    <a
+                      href=""
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="fas fa-file-pdf"></i>
+                      </span>
+                      <span>Paper</span>
+                    </a>
+                  </span> -->
+                  <span class="link-block">
+                    <a
+                      href="http://arxiv.org/abs/2303.16184"
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="ai ai-arxiv"></i>
+                      </span>
+                      <span>arXiv</span>
+                    </a>
+                  </span>
+                  <!-- Video Link. -->
+                  <span class="link-block">
+                    <a
+                      href="https://www.youtube.com/watch?v=MrKrnHhk8IA"
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="fab fa-youtube"></i>
+                      </span>
+                      <span>Video</span>
+                    </a>
+                  </span>
+                  <!-- Code Link. -->
+                  <span class="link-block">
+                    <a
+                      href="https://github.com/bennyguo/hybrid-volume-mesh"
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="fab fa-github"></i>
+                      </span>
+                      <span>Code</span>
+                    </a>
+                  </span>
+                  <!-- Dataset Link. -->
+                  <!-- <span class="link-block">
+                    <a
+                      href=""
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="far fa-images"></i>
+                      </span>
+                      <span>Data</span>
+                    </a>
+                  </span> -->
+                  <!-- Demo. -->
+                  <span class="link-block">
+                    <a
+                      href="#section-demo"
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="fas fa-laptop-code"></i>
+                      </span>
+                      <span>Demo</span>
+                    </a>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- <section class="hero teaser">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <div class="video-compare-container" id="materialsDiv">
+            <video
+              class="video"
+              id="materials"
+              loop
+              playsinline
+              autoplay
+              muted
+              src="./static/videos/garden_small_2.mp4"
+              onplay="resizeAndPlay(this)"
+            ></video>
+            <canvas height="0" class="videoMerge" id="materialsMerge"></canvas>
+          </div>
+          <h2 class="subtitle has-text-centered">
+            Vosh models garden scene with coarse grid and shaded triangular mesh for
+            efficient view synthesis.
+          </h2>
+        </div>
+      </div>
+    </section> -->
+
+    
+    <section class="hero teaser">
+      
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <h2 class="title is-3">Video</h2>
+          <div class="columns is-centered">
+          <div class="video-compare-container" id="materialsDiv">
+            <video
+              class="video"
+              id="materials"
+              loop
+              muted
+              controls
+              src="./static/videos/vosh-demo.mp4"
+            ></video>
+          </div>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    
+
+    <section class="section">
+      <div class="container is-max-desktop">
+        <h2 class="title is-3">Vosh</h2>
+        <div class="columns is-centered">
+          <div class="column is-full-width">
+
+              <div class="pic-container">
+                  <img src="./static/images/vosh.png" alt="Image" class="centered-image">
+              </div>
+            </div>
+          </div>
+        </div>
+    </section>
+    
+
+
+    <section class="section">
+      <div class="container is-max-desktop">
+        <!-- Abstract. -->
+        <div class="columns is-centered">
+          <div class="column is-full-width">
+            <h2 class="title is-3">Abstract</h2>
+            <div class="content has-text-justified">
+              <p>
+                The neural radiance field (NeRF) has emerged as a prominent methodology 
+                for synthesizing realistic images of novel views. While neural radiance 
+                representations based on voxels or mesh individually offer distinct 
+                advantages, excelling in either rendering quality or speed, each has 
+                limitations in the other aspect. In response, we propose a pioneering
+                hybrid representation named \emph{Vosh}, seamlessly combining both 
+                voxel and mesh components in hybrid rendering for view synthesis. 
+                Vosh is meticulously crafted by optimizing the voxel grid of NeRF, 
+                strategically with selected voxels replaced by mesh. Therefore, it 
+                excels in fast rendering scenes with simple geometry and textures 
+                through its mesh component, while simultaneously enabling high-quality 
+                rendering in intricate regions by leveraging voxel component. 
+                The flexibility of Vosh is showcased through the ability to adjust 
+                hybrid ratios, providing users the ability to control the balance between 
+                rendering quality and speed based on flexible usage. Experimental results 
+                demonstrates that our method achieves commendable trade-off between 
+                rendering quality and speed, and notably has real-time performance on mobile devices.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-max-desktop">
+        <!-- Pipeline. -->
+        <div class="columns is-centered">
+          <div class="column is-full-width">
+            <h2 class="title is-3">Pipeline</h2>
+
+            <div class="content has-text-centered">
+              <img
+                src="./static/images/pipeline-website.png"
+                alt=""
+                width="100%"
+              />
+            </div>
+
+            <div class="content has-text-justified">
+              <p>
+                An overview of the proposed methodology. 
+                The training phase starts from grid training for obtaining initial voxels. 
+                Then, a portion of voxels becomes mesh in the voxels to mesh conversion. 
+                Subsequently, the combination of voxels and mesh are optimized through hybrid 
+                rendering and voxels adjustment to obtain the final hybrid representation Vosh. 
+                The inference phase realizes real-time hybrid rendering with Vosh even on mobile phones.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Texture representation. -->
+        <!-- <div class="columns is-centered">
+          <div class="column is-full-width">
+            <h2 class="title is-3">Texture Representation</h2>
+
+            <div class="content has-text-justified">
+              <p>
+                
+              </p>
+            </div>
+
+            <div class="content has-text-centered">
+              <img
+                src=""
+                alt=""
+                width="100%"
+              />
+            </div>
+          </div>
+        </div> -->
+      </div>
+    </section>
+
+
+
+    <section class="section">
+      <div class="container is-max-desktop">
+        <!-- Pipeline. -->
+        <div class="columns is-centered">
+          <div class="column is-full-width">
+            <h2 class="title is-3">Hybrid rendering & Vosh representation</h2>
+            <div class="container is-max-desktop">
+                <div class="pic-compare-container">
+                  <div class="image-container">
+                    <canvas class="canvas" id="bicycleCanvas"></canvas>
+                  </div>
+                  <h2 class="subtitle has-text-centered is-4 strong">
+                    MipNeRF-360: Bicycle
+                  </h2>
+
+                  <div class="image-container">
+                    <canvas class="canvas" id="stumpCanvas"></canvas>
+                  </div>
+                  <h2 class="subtitle has-text-centered is-4 strongx">
+                    MipNeRF-360: Stump
+                  </h2>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+    <section class="hero teaser">
+
+    </section>
+
+    
+
+
+    <script>
+      window.addEventListener('load', function() {
+        resizeAndDrawImg("bicycleCanvas", "./static/images/bicycle_compare.png");
+        resizeAndDrawImg("stumpCanvas", "./static/images/stump_compare.png");
+      })
+    </script>
+
+
+    <section class="section" id="section-demo">
+      <div class="container is-max-desktop">
+        <!-- Demos. -->
+        <div class="columns is-centered">
+          <div class="column is-full-width">
+            <h2 class="title is-3">Real-Time Web Demos</h2>
+            <div class="columns is-centered">
+              <div class="column is-4 demo-card">
+                <img src="./static/images/Gardenvase.JPG" alt="" />
+                <h3>Gardenvase</h3>
+                <!-- <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/chair-t1024">
+                </a> -->
+                <div class="version_select">
+                  <input type="radio" id="garden-vosh-base" name="garden-vosh" value=0 checked>
+                  <label for="garden-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="garden-vosh-light" name="garden-vosh" value=1>
+                  <label for="garden-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="garden-low" name="garden-quality" value="low">
+                  <label for="garden-low">Low</label>
+                  <input type="radio" id="garden-medium" name="garden-quality" value="medium" checked>
+                  <label for="garden-medium">Medium</label>
+                  <input type="radio" id="garden-high" name="garden-quality" value="high">
+                  <label for="garden-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick="handleGardenButtonClick()">Go to Scene</button>
+                </div>
+              </div>
+
+              <div class="column is-4 demo-card">
+                <img src="./static/images/Bicycle.JPG" alt="" />
+                <h3>Bicycle</h3>
+                <!-- <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/drums-t1024">
+                </a> -->
+                <div class="version_select">
+                  <input type="radio" id="bicycle-vosh-base" name="bicycle-vosh" value=0 checked>
+                  <label for="bicycle-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="bicycle-vosh-light" name="bicycle-vosh" value=1>
+                  <label for="bicycle-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="bicycle-low" name="bicycle-quality" value="low">
+                  <label for="bicycle-low">Low</label>
+                  <input type="radio" id="bicycle-medium" name="bicycle-quality" value="medium" checked>
+                  <label for="bicycle-medium">Medium</label>
+                  <input type="radio" id="bicycle-high" name="bicycle-quality" value="high">
+                  <label for="bicycle-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick="handleBicycleButtonClick()">Go to Scene</button>
+                </div>
+              </div>
+
+              <div class="column is-4 demo-card">
+                <img src="./static/images/Stump.JPG" alt="" />
+                <h3>Stump</h3>
+                <!-- <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/ficus-t1024">
+                </a> -->
+                <div class="version_select">
+                  <input type="radio" id="stump-vosh-base" name="stump-vosh" value=0 checked>
+                  <label for="stump-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="stump-vosh-light" name="stump-vosh" value=1>
+                  <label for="stump-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="stump-low" name="stump-quality" value="low">
+                  <label for="stump-low">Low</label>
+                  <input type="radio" id="stump-medium" name="stump-quality" value="medium" checked>
+                  <label for="stump-medium">Medium</label>
+                  <input type="radio" id="stump-high" name="stump-quality" value="high">
+                  <label for="stump-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick="handleStumpButtonClick()">Go to Scene</button>
+                </div>
+              </div>
+              <!-- <div class="column is-3 demo-card">
+                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/hotdog-t1024">
+                  <img src="./static/images/hotdog.png" alt="" />
+                  <h3>Hotdog (9MB)</h3>
+                </a>
+              </div>
+            </div>
+            <div class="columns is-centered">
+              <div class="column is-3 demo-card">
+                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/lego-t1024">
+                  <img src="./static/images/lego.png" alt="" />
+                  <h3>Lego (11MB)</h3>
+                </a>
+              </div>
+              <div class="column is-3 demo-card">
+                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/materials-t1024">
+                  <img src="./static/images/materials.png" alt="" />
+                  <h3>Materials (10MB)</h3>
+                </a>
+              </div>
+              <div class="column is-3 demo-card">
+                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/mic-t1024">
+                  <img src="./static/images/mic.png" alt="" />
+                  <h3>Mic (10MB)</h3>
+                </a>
+              </div>
+              <div class="column is-3 demo-card">
+                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/ship-t1024">
+                  <img src="./static/images/ship.png" alt="" />
+                  <h3>Ship (12MB)</h3>
+                </a>
+              </div> -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- <section class="section" id="BibTeX">
+      <div class="container is-max-desktop content">
+        <h2 class="title">BibTeX</h2>
+        <pre><code>@misc{guo2023vmesh,
+  title={VMesh: Hybrid Volume-Mesh Representation for Efficient View Synthesis}, 
+  author={Yuan-Chen Guo and Yan-Pei Cao and Chen Wang and Yu He and Ying Shan and Song-Hai Zhang},
+  year={2023},
+  eprint={2303.16184},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+}</code></pre>
+      </div>
+    </section> -->
+
+    <footer class="footer">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-10">
+            <div class="content">
+              <p>
+                The website template was borrowed from
+                <a href="https://nerfies.github.io/"
+                  >https://nerfies.github.io/</a
+                >
+                and is licensed under a
+                <a href="http://creativecommons.org/licenses/by-sa/4.0/"
+                  >Creative Commons Attribution-ShareAlike 4.0 International
+                  License</a>. 
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
