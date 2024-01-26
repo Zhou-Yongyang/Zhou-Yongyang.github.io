@@ -418,10 +418,10 @@ void main() {
     const int DISPLAY_MESH_AND_GRID = 7;
     
     int use_displayMode = displayMode;
-    float w = 1080.0 / 1920.0;
-    if(gl_FragCoord.x * w <= gl_FragCoord.y){
-        use_displayMode = DISPLAY_NORMAL;
-    }
+    // float w = 1080.0 / 1920.0;
+    // if(gl_FragCoord.x * w <= gl_FragCoord.y){
+    //     use_displayMode = DISPLAY_NORMAL;
+    // }
     
     // Set up the ray parameters in world space..
     float nearWorld = nearPlane;
