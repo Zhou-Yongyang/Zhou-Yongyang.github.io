@@ -2,7 +2,7 @@
 // const rendererURL = 'http://127.0.0.1:5500/renderer_vosh/renderer.html'
 const assetsURL = 'https://huggingface.co/zachzhang07/Vosh/resolve/main';
 // const assetsURL = 'https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/chair-t1024';
-const rendererURL = "https://zhou-yongyang.github.io/renderer_vosh/renderer.html";
+const rendererURL = "./renderer_vosh/renderer.html";
 
 // const rendererURL = 'https://huggingface.co/zachzhang07/Vosh/tree/main/'
 function handleGardenButtonClick(){
