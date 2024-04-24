@@ -164,7 +164,7 @@ function drawImg(canvas, image) {
     mergeContext.arc(currX, arrowPosY, arrowLength*0.00, 0, Math.PI * 2, false);
     mergeContext.fillStyle = "#FFD79340";
     mergeContext.fill()
-    mergeContext.strokeStyle = "#ffffff";
+    mergeContext.strokeStyle = "#00aaff";
     mergeContext.stroke()
 
     // Draw border
@@ -172,7 +172,7 @@ function drawImg(canvas, image) {
     mergeContext.moveTo(imgWidth * position, 0);
     mergeContext.lineTo(imgWidth * position, imgHeight);
     mergeContext.closePath()
-    mergeContext.strokeStyle = "#ffffff";
+    mergeContext.strokeStyle = "#00aaff";
     mergeContext.lineWidth = 4;
     mergeContext.stroke();
 
@@ -203,8 +203,29 @@ function drawImg(canvas, image) {
 
     mergeContext.closePath();
 
-    mergeContext.fillStyle = "#ffffff";
+    mergeContext.fillStyle = "#00aaff";
     mergeContext.fill();
+
+
+
+    const fontSize = 30;
+    const textPadding = 5;
+    ctx.font = `${fontSize}px Times New Roman`;
+    
+
+
+    const botLeftText = 'Full';
+    // ctx.fillStyle = 'lightblue';
+    // ctx.fillRect(textPadding, textPadding, ctx.measureText(topLeftText).width + 2 * textPadding, fontSize + textPadding);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(botLeftText, textPadding, canvas.height - textPadding);
+
+
+    const botRightText = 'Volume';
+    // ctx.fillStyle = 'lightblue';
+    // ctx.fillRect(canvas.width - ctx.measureText(topRightText).width - 2* textPadding, textPadding, ctx.measureText(topRightText).width + 2 * textPadding, fontSize + textPadding);
+    ctx.fillStyle = "#000000";
+    ctx.fillText(botRightText, canvas.width - ctx.measureText(botRightText).width - textPadding, canvas.height - textPadding);
   }
 
   requestAnimationFrame(drawLoop);

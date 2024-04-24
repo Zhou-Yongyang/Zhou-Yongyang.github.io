@@ -12,7 +12,7 @@
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>
-      Vosh: Voxel-Mesh Hybrid Representation for Real-time View Synthesis
+      Voxel-Mesh Hybrid Representation For Real-Time View Synthesis By Meshing Density Field
     </title>
     <link
       href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
@@ -60,7 +60,7 @@
           <div class="columns is-centered">
             <div class="column has-text-centered">
               <h1 class="title is-1 publication-title">
-                Vosh: Voxel-Mesh Hybrid Representation for Real-time View Synthesis
+                Voxel-Mesh Hybrid Representation For Real-Time View Synthesis By Meshing Density Field
               </h1>
               <!-- <div class="is-size-5 publication-authors">
                 <span class="author-block">
@@ -81,17 +81,37 @@
               </div> -->
 
               <div class="is-size-5 publication-authors">
-                <span class="author-block"
-                  >Anonymous</span
-                >
+                <span class="author-block">
+                  <a href>Chenhao Zhang</a>
+                  <!-- <sup>1</sup> -->
+                  ,
+                </span>
+
+                <span class="author-block">
+                  <a href>Yongyang Zhou</a>
+                  <!-- <sup>1</sup> -->
+                  ,
+                </span>
+
+                <span class="author-block">
+                  <a href>Lei Zhang</a>
+                  <!-- <sup>1</sup> -->
+                  ,
+                </span>
+              </div>
+
+              <div class="is-size-5 publication-authors">
+                <span class="author-block">
+                  Beijing Institute of Technology
+                </span>
               </div>
 
               <div class="column has-text-centered">
                 <div class="publication-links">
                   <!-- PDF Link. -->
-                  <!-- <span class="link-block">
+                  <span class="link-block">
                     <a
-                      href=""
+                      href="https://arxiv.org/abs/2403.06505"
                       class="external-link button is-normal is-rounded is-dark"
                     >
                       <span class="icon">
@@ -99,7 +119,7 @@
                       </span>
                       <span>Paper</span>
                     </a>
-                  </span> -->
+                  </span>
                   <!-- <span class="link-block">
                     <a
                       href="http://arxiv.org/abs/2303.16184"
@@ -126,9 +146,9 @@
                   </span> -->
 
                   <!-- Code Link. -->
-                  <!-- <span class="link-block">
+                  <span class="link-block">
                     <a
-                      href="https://github.com/bennyguo/hybrid-volume-mesh"
+                      href=""
                       class="external-link button is-normal is-rounded is-dark"
                     >
                       <span class="icon">
@@ -136,7 +156,7 @@
                       </span>
                       <span>Code</span>
                     </a>
-                  </span> -->
+                  </span>
 
                   <!-- Dataset Link. -->
                   <!-- <span class="link-block">
@@ -152,7 +172,7 @@
                   </span> -->
 
                   <!-- Demo. -->
-                  <!-- <span class="link-block">
+                  <span class="link-block">
                     <a
                       href="#section-demo"
                       class="external-link button is-normal is-rounded is-dark"
@@ -160,7 +180,7 @@
                       <span class="icon">
                         <i class="fas fa-laptop-code"></i>
                       </span>
-                      <span>Demo</span> -->
+                      <span>Demo</span>
                     </a>
                   </span>
                 </div>
@@ -243,23 +263,26 @@
             <h2 class="title is-3">Abstract</h2>
             <div class="content has-text-justified">
               <p>
-                The neural radiance field (NeRF) has emerged as a prominent methodology 
-                for synthesizing realistic images of novel views. While neural radiance 
-                representations based on voxels or mesh individually offer distinct 
-                advantages, excelling in either rendering quality or speed, each has 
-                limitations in the other aspect. In response, we propose a pioneering
-                hybrid representation named \emph{Vosh}, seamlessly combining both 
-                voxel and mesh components in hybrid rendering for view synthesis. 
-                Vosh is meticulously crafted by optimizing the voxel grid of NeRF, 
-                strategically with selected voxels replaced by mesh. Therefore, it 
-                excels in fast rendering scenes with simple geometry and textures 
-                through its mesh component, while simultaneously enabling high-quality 
-                rendering in intricate regions by leveraging voxel component. 
-                The flexibility of Vosh is showcased through the ability to adjust 
-                hybrid ratios, providing users the ability to control the balance between 
-                rendering quality and speed based on flexible usage. Experimental results 
-                demonstrates that our method achieves commendable trade-off between 
-                rendering quality and speed, and notably has real-time performance on mobile devices.
+                The neural radiance field (NeRF) has emerged as
+                a prominent methodology for synthesizing realistic images of
+                novel views. While neural radiance representations based on
+                voxels or mesh individually offer distinct advantages, excelling
+                in either rendering quality or speed, each has limitations in
+                the other aspect. In response, we propose a pioneering hybrid
+                representation named Vosh, seamlessly combining both voxel
+                and mesh components in hybrid rendering for view synthesis.
+                Vosh is meticulously crafted by optimizing the voxel grid of
+                NeRF, strategically meshing a portion of the volumetric density
+                field to surface. Therefore, it excels in fast rendering scenes
+                with simple geometry and textures through its mesh component,
+                while simultaneously enabling high-quality rendering in intricate
+                regions by leveraging voxel component. The flexibility of Vosh is
+                showcased through the ability to adjust hybrid ratios, providing
+                users the ability to control the balance between rendering
+                quality and speed based on flexible usage. Experimental results
+                demonstrates that our method achieves commendable trade-off
+                between rendering quality and speed, and notably has real-time
+                performance on mobile devices
               </p>
             </div>
           </div>
@@ -356,8 +379,10 @@
 
     <script>
       window.addEventListener('load', function() {
-        resizeAndDrawImg("bicycleCanvas", "./static/images/bicycle_compare.png");
-        resizeAndDrawImg("stumpCanvas", "./static/images/stump_compare.png");
+        // resizeAndDrawImg("bicycleCanvas", "./static/images/bicycle_compare.png");
+        resizeAndDrawImg("bicycleCanvas", "./static/images/bicycle_compare_volume.png");
+        // resizeAndDrawImg("stumpCanvas", "./static/images/stump_compare.png");
+        resizeAndDrawImg("stumpCanvas", "./static/images/stump_compare_volume.png");
       })
     </script>
 
@@ -368,12 +393,13 @@
         <div class="columns is-centered">
           <div class="column is-full-width">
             <h2 class="title is-3">Real-Time Web Demos</h2>
+            <!--Mip NeRF 360 Demos-->
+            <h2 class="title is-4">Mip-NeRF 360</h2>
             <div class="columns is-centered">
+              
               <div class="column is-4 demo-card">
                 <img src="./static/images/Gardenvase.JPG" alt="" />
                 <h3>Gardenvase</h3>
-                <!-- <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/chair-t1024">
-                </a> -->
                 <div class="version_select">
                   <input type="radio" id="garden-vosh-base" name="garden-vosh" value=0 checked>
                   <label for="garden-vosh-base">Vosh-Base</label>
@@ -389,7 +415,7 @@
                   <label for="garden-high">High</label>
                 </div>
                 <div class="goto_scene_button">
-                  <button class="goto_button" onclick="handleGardenButtonClick()">Go to Scene</button>
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("garden", "false", "3")'>Go to Scene</button>
                 </div>
               </div>
 
@@ -413,7 +439,7 @@
                   <label for="bicycle-high">High</label>
                 </div>
                 <div class="goto_scene_button">
-                  <button class="goto_button" onclick="handleBicycleButtonClick()">Go to Scene</button>
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("bicycle", "false", "3")'>Go to Scene</button>
                 </div>
               </div>
 
@@ -437,46 +463,225 @@
                   <label for="stump-high">High</label>
                 </div>
                 <div class="goto_scene_button">
-                  <button class="goto_button" onclick="handleStumpButtonClick()">Go to Scene</button>
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("stump", "false", "3")'>Go to Scene</button>
                 </div>
               </div>
-              <!-- <div class="column is-3 demo-card">
-                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/hotdog-t1024">
-                  <img src="./static/images/hotdog.png" alt="" />
-                  <h3>Hotdog (9MB)</h3>
-                </a>
+              
+            
+            </div>
+
+            <!--NeRF Synthetic Demos-->
+            <h2 class="title is-4">NeRF Synthetic</h2>
+            <!--First Row-->
+            <div class="columns is-centered">
+
+              <div class="column is-3 demo-card">
+                <div class="columns is-centered">
+                <img src="./static/images/chair.png" width="50%" height="=50%"  alt="" />
+                </div>
+                <h3>Chair</h3>
+                <div class="version_select">
+                  <input type="radio" id="chair-vosh-base" name="chair-vosh" value=0 checked>
+                  <label for="chair-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="chair-vosh-light" name="chair-vosh" value=1>
+                  <label for="chair-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="chair-low" name="chair-quality" value="low">
+                  <label for="chair-low">Low</label>
+                  <input type="radio" id="chair-medium" name="chair-quality" value="medium" checked>
+                  <label for="chair-medium">Medium</label>
+                  <input type="radio" id="chair-high" name="chair-quality" value="high">
+                  <label for="chair-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("chair", "true", "1")'>Go to Scene</button>
+                </div>
+              </div>
+
+              <div class="column is-3 demo-card">
+                <div class="columns is-centered">
+                  <img src="./static/images/drums.png" width="50%" height="=50%"  alt="" />
+                  </div>
+                <h3>Drums</h3>
+                <div class="version_select">
+                  <input type="radio" id="drums-vosh-base" name="drums-vosh" value=0 checked>
+                  <label for="drums-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="drums-vosh-light" name="drums-vosh" value=1>
+                  <label for="drums-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="drums-low" name="drums-quality" value="low">
+                  <label for="drums-low">Low</label>
+                  <input type="radio" id="drums-medium" name="drums-quality" value="medium" checked>
+                  <label for="drums-medium">Medium</label>
+                  <input type="radio" id="drums-high" name="drums-quality" value="high">
+                  <label for="drums-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("drums", "true", "1")'>Go to Scene</button>
+                </div>
+              </div>
+
+              <div class="column is-3 demo-card">
+                <div class="columns is-centered">
+                  <img src="./static/images/ficus.png" width="50%" height="=50%"  alt="" />
+                  </div>
+                <h3>Ficus</h3>
+                <div class="version_select">
+                  <input type="radio" id="ficus-vosh-base" name="ficus-vosh" value=0 checked>
+                  <label for="ficus-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="ficus-vosh-light" name="ficus-vosh" value=1>
+                  <label for="ficus-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="ficus-low" name="ficus-quality" value="low">
+                  <label for="ficus-low">Low</label>
+                  <input type="radio" id="ficus-medium" name="ficus-quality" value="medium" checked>
+                  <label for="ficus-medium">Medium</label>
+                  <input type="radio" id="ficus-high" name="ficus-quality" value="high">
+                  <label for="ficus-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("ficus", "true", "1")'>Go to Scene</button>
+                </div>
+              </div>
+
+
+              <div class="column is-3 demo-card">
+                <div class="columns is-centered">
+                  <img src="./static/images/ship.png" width="50%" height="=50%"  alt="" />
+                  </div>
+                <h3>Ship</h3>
+                <div class="version_select">
+                  <input type="radio" id="ship-vosh-base" name="ship-vosh" value=0 checked>
+                  <label for="ship-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="ship-vosh-light" name="ship-vosh" value=1>
+                  <label for="ship-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="ship-low" name="ship-quality" value="low">
+                  <label for="ship-low">Low</label>
+                  <input type="radio" id="ship-medium" name="ship-quality" value="medium" checked>
+                  <label for="ship-medium">Medium</label>
+                  <input type="radio" id="ship-high" name="ship-quality" value="high">
+                  <label for="ship-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("ship", "true", "1")'>Go to Scene</button>
+                </div>
               </div>
             </div>
+
+            <!--Second Row-->
             <div class="columns is-centered">
               <div class="column is-3 demo-card">
-                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/lego-t1024">
-                  <img src="./static/images/lego.png" alt="" />
-                  <h3>Lego (11MB)</h3>
-                </a>
+                <div class="columns is-centered">
+                <img src="./static/images/lego.png" width="50%" height="=50%"  alt="" />
+                </div>
+                <h3>Lego</h3>
+                <div class="version_select">
+                  <input type="radio" id="lego-vosh-base" name="lego-vosh" value=0 checked>
+                  <label for="lego-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="lego-vosh-light" name="lego-vosh" value=1>
+                  <label for="lego-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="lego-low" name="lego-quality" value="low">
+                  <label for="lego-low">Low</label>
+                  <input type="radio" id="lego-medium" name="lego-quality" value="medium" checked>
+                  <label for="lego-medium">Medium</label>
+                  <input type="radio" id="lego-high" name="lego-quality" value="high">
+                  <label for="lego-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("lego", "true", "1")'>Go to Scene</button>
+                </div>
               </div>
+
+
               <div class="column is-3 demo-card">
-                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/materials-t1024">
-                  <img src="./static/images/materials.png" alt="" />
-                  <h3>Materials (10MB)</h3>
-                </a>
+                <div class="columns is-centered">
+                <img src="./static/images/mic.png" width="50%" height="=50%"  alt="" />
+                </div>
+                <h3>Mic</h3>
+                <div class="version_select">
+                  <input type="radio" id="mic-vosh-base" name="mic-vosh" value=0 checked>
+                  <label for="mic-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="mic-vosh-light" name="mic-vosh" value=1>
+                  <label for="mic-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="mic-low" name="mic-quality" value="low">
+                  <label for="mic-low">Low</label>
+                  <input type="radio" id="mic-medium" name="mic-quality" value="medium" checked>
+                  <label for="mic-medium">Medium</label>
+                  <input type="radio" id="mic-high" name="mic-quality" value="high">
+                  <label for="mic-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("mic", "true", "1")'>Go to Scene</button>
+                </div>
               </div>
+
               <div class="column is-3 demo-card">
-                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/mic-t1024">
-                  <img src="./static/images/mic.png" alt="" />
-                  <h3>Mic (10MB)</h3>
-                </a>
+                <div class="columns is-centered">
+                <img src="./static/images/materials.png" width="50%" height="=50%"  alt="" />
+                </div>
+                <h3>Materials</h3>
+                <div class="version_select">
+                  <input type="radio" id="materials-vosh-base" name="materials-vosh" value=0 checked>
+                  <label for="materials-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="materials-vosh-light" name="materials-vosh" value=1>
+                  <label for="materials-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="materials-low" name="materials-quality" value="low">
+                  <label for="materials-low">Low</label>
+                  <input type="radio" id="materials-medium" name="materials-quality" value="medium" checked>
+                  <label for="materials-medium">Medium</label>
+                  <input type="radio" id="materials-high" name="materials-quality" value="high">
+                  <label for="materials-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("materials", "true", "1")'>Go to Scene</button>
+                </div>
               </div>
+
               <div class="column is-3 demo-card">
-                <a href="./vmesh-renderer.html?scene=https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/ship-t1024">
-                  <img src="./static/images/ship.png" alt="" />
-                  <h3>Ship (12MB)</h3>
-                </a>
-              </div> -->
+                <div class="columns is-centered">
+                <img src="./static/images/hotdog.png" width="50%" height="=50%"  alt="" />
+                </div>
+                <h3>Hotdog</h3>
+                <div class="version_select">
+                  <input type="radio" id="hotdog-vosh-base" name="hotdog-vosh" value=0 checked>
+                  <label for="hotdog-vosh-base">Vosh-Base</label>
+                  <input type="radio" id="hotdog-vosh-light" name="hotdog-vosh" value=1>
+                  <label for="hotdog-vosh-light">Vosh-Light</label>
+                </div>
+                <div class="quality_select">
+                  <input type="radio" id="hotdog-low" name="hotdog-quality" value="low">
+                  <label for="hotdog-low">Low</label>
+                  <input type="radio" id="hotdog-medium" name="hotdog-quality" value="medium" checked>
+                  <label for="hotdog-medium">Medium</label>
+                  <input type="radio" id="hotdog-high" name="hotdog-quality" value="high">
+                  <label for="hotdog-high">High</label>
+                </div>
+                <div class="goto_scene_button">
+                  <button class="goto_button" onclick='handleGoToSceneButtonClick("hotdog", "true", "1")'>Go to Scene</button>
+                </div>
+              </div>
+            
             </div>
+            
           </div>
         </div>
       </div>
     </section>
+
+
+
+    
 
     <!-- <section class="section" id="BibTeX">
       <div class="container is-max-desktop content">

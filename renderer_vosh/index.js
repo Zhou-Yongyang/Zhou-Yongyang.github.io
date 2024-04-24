@@ -1,8 +1,9 @@
 // http://localhost:8000/renderer/renderer.html?dir=../trial_bicycle_vosh-encoder/assets&quality=medium
 // import createSceneMeshInVosh from "./mesh_in_vosh.js"
 
+
+
 let gSceneMeshInVosh = null
-let gMesh = null;
 let gRenderVosh = 1;
 
 /**
@@ -628,7 +629,7 @@ function loadMeshAssets(meshUrl, cas_num) {
  * @param {number} nearPlane Distance to the near clipping plane
  */
 function loadScene(
-    dirUrl, width, height, useLargerStepsWhenOccluded, nearPlane) {
+    dirUrl, width, height, useLargerStepsWhenOccluded, nearPlane, is_object_data, cas_num) {
     // Check if dirUrl points to a json file or to a directory.
     if (dirUrl.includes('.json')) {
         // If this is the case, we fetch a JSON file that maps filenames to links.
@@ -645,7 +646,7 @@ function loadScene(
 
         let meshUrl =
             filenameToLinkTranslator.translate('mesh');
-        let meshPromise = loadMeshAssets(meshUrl, cas_num=4);
+        let meshPromise = loadMeshAssets(meshUrl, cas_num=cas_num);
         meshPromise.then(parsed => {
             gSceneMeshInVosh = new THREE.Scene();
             // gSceneMeshInVosh.add(parsed[0]);
@@ -666,7 +667,11 @@ function loadScene(
 
             // Some of the shader code is stored in seperate files.
             viewdepdencyShaderPromise = loadTextFile('viewdependency.glsl');
-            fragmentShaderPromise = loadTextFile('fragment.glsl');
+            if(is_object_data){
+                fragmentShaderPromise = loadTextFile('fragment_object.glsl');
+            }else{
+                fragmentShaderPromise = loadTextFile('fragment.glsl');
+            }
             textPromises =
                 [sceneParamsPromise, viewdepdencyShaderPromise, fragmentShaderPromise];
 
@@ -889,6 +894,12 @@ function loadScene(
                     'gRenderVosh': {'value': gRenderVosh},
                 };
 
+                has_vol = sceneParams['has_vol'];
+                console.log("has_vol:" + has_vol);
+                if(has_vol){
+                    fragmentShaderSource = '#define HAS_VOL\n' + fragmentShaderSource;
+                }
+
                 if (useTriplane) {
                     let triplaneUniforms = {
                         'planeRgb': {'value': planeRgbTexture},
@@ -952,7 +963,7 @@ function loadScene(
 
                 // Start rendering ASAP, forcing THREE.js to upload the textures.
                 requestAnimationFrame(
-                    t => update(t, dirUrl, filenameToLinkTranslator, useSparseGrid, sceneParams, cas_num=4)
+                    t => update(t, dirUrl, filenameToLinkTranslator, useSparseGrid, sceneParams, cas_num=cas_num)
                 );
             });
         });
@@ -964,19 +975,67 @@ function loadScene(
  */
 function initFromParameters() {
     const params = new URL(window.location.href).searchParams;
+    //mip-nerf360 dataset
+    // const is_object_data = false;
+    // const cas_num = 3;
+
+    //nerf_synthetic dataset
+    // const is_object_data = true;
+    // const cas_num = 1;
+
     const dirUrl = params.get('dir');
+    const is_object_data_str = params.get('is_object');
+    const cas_num = params.get('cas_num');
 
-    // const dirUrl = '../snerg_1024//bicycle_vosh_0.1/assets';
-    // const dirUrl = '../snerg_1024/garden_vosh_0.1/assets';
-    // const dirUrl = '../snerg_1024/garden_vosh_0.001/assets';
-
-    // const dirUrl = '../snerg_1024/bicycle_vosh_0.1_mcr32/assets'
-    // const dirUrl = '../snerg_1024/bicycle_vosh_0.1_mcr16/assets'
-    // const dirUrl = '../snerg_1024/bicycle_vosh_0.001/assets'
-    // const dirUrl = '../snerg_1024/stump_vosh_0.001/assets';
-    // const dirUrl = '../snerg_1024/stump_vosh_0.1_mcr16/assets'
-    // const dirUrl = '../snerg_1024/garden_vosh_0.1_mcr16/assets'
+    const is_object_data = is_object_data_str === 'true';
+    // const is_object_data = true;
+    // const cas_num = 1;
     
+
+    console.log("is_object_data:" + is_object_data);
+    console.log(cas_num);
+
+
+    // const dirUrl = '../Assets/bicycle_base/assets'
+    // const dirUrl = '../Assets/garden_base/assets'
+    // const dirUrl = '../Assets/stump_base/assets'
+    
+    // const dirUrl = '../Assets/bicycle_light/assets'
+    // const dirUrl = '../Assets/garden_light/assets'
+    // const dirUrl = '../Assets/stump_light/assets'
+    // const dirUrl = '../Assets/bicycle_test/assets'
+
+
+
+
+
+    // const dirUrl = '../Assets/chair_light/assets'
+    // const dirUrl = '../Assets/ficus_light/assets'
+    // const dirUrl = '../Assets/mic_light/assets'
+    // const dirUrl = '../Assets/ship_light/assets'
+    // const dirUrl = '../Assets/lego_light/assets'
+    // const dirUrl = '../Assets/materials_light/assets'
+    // const dirUrl = '../Assets/hotdog_light/assets'
+    // const dirUrl = '../Assets/drums_light/assets'
+    
+    
+    // const dirUrl = '../Assets/chair_base/assets'
+    // const dirUrl = '../Assets/ficus_base/assets'
+    // const dirUrl = '../Assets/mic_base/assets'
+    // const dirUrl = '../Assets/ship_base/assets'
+    // const dirUrl = '../Assets/lego_base/assets'
+    // const dirUrl = '../Assets/materials_base/assets'
+    // const dirUrl = '../Assets/hotdog_base/assets'
+    // const dirUrl = '../Assets/drums_base/assets'
+
+    // const dirUrl = '../Assets/chair_base_old/assets'
+    // const dirUrl = '../Assets/bicycle_test/assets'
+    // const dirUrl = '../Assets/stump_test/assets'
+
+    // const dirUrl = '../Assets/lego_small_light/assets'
+    // const dirUrl = '../Assets/ficus_small_light/assets'
+    // const dirUrl = '../Assets/ship_small_light/assets'
+    // const dirUrl = '../Assets/hotdog_small_light/assets'
 
     const size = params.get('s');
 
@@ -992,8 +1051,8 @@ function initFromParameters() {
     }
 
     const usageString =
-        'To view a MERF scene, specify the following parameters in the URL:\n' +
-        '(Required) The URL to a MERF scene directory.\n' +
+        'To view a Vosh scene, specify the following parameters in the URL:\n' +
+        '(Required) The URL to a Vosh scene directory.\n' +
         's: (Optional) The dimensions as width,height. E.g. 640,360.\n' +
         'vfovy:  (Optional) The vertical field of view of the viewer.';
 
@@ -1022,7 +1081,7 @@ function initFromParameters() {
             frameBufferWidth = Math.min(350, frameBufferWidth);
             frameBufferHeight = Math.min(600, frameBufferHeight);
         } else if (quality == 'low') {  // For laptops with integrated GPUs.
-            frameBufferWidth = Math.min(1280, frameBufferWidth);
+            frameBufferWidth = Math.min(1200, frameBufferWidth);
             frameBufferHeight = Math.min(800, frameBufferHeight);
         } else if (quality == 'medium') {  // For laptops with dicrete GPUs.
             frameBufferWidth = Math.min(1920, frameBufferWidth);
@@ -1079,6 +1138,7 @@ function initFromParameters() {
     // gRenderer.gammaOutput = true;
     // gRenderer.gammaFactor = 2.2;   //电脑显示屏的gammaFactor为2.2
 
+
     // Set up the normal scene used for rendering.
     gCamera = new THREE.PerspectiveCamera(
         72,
@@ -1090,13 +1150,29 @@ function initFromParameters() {
     gRenderer.autoClear = false;
     gRenderer.setSize(view.offsetWidth, view.offsetHeight);
 
+
+    const displayModeSelect = document.getElementById('display-mode');
+
+    displayModeSelect.addEventListener('change', function() {
+        const selectedValue = displayModeSelect.value;
+        const selectedText = displayModeSelect.options[displayModeSelect.selectedIndex].text;
+        console.log('Selected Value:', selectedValue);
+        console.log('Selected Text:', selectedText);
+        // 在这里可以添加任何其他处理逻辑
+        gDisplayMode = selectedValue;
+        displayModeSelect.text 
+
+    });
+
     const mouseMode = params.get('mouseMode');
     setupCameraControls(mouseMode, view);
     setupInitialCameraPose(dirUrl);
     loadScene(
         dirUrl, Math.trunc(view.offsetWidth),
         Math.trunc(view.offsetHeight), useLargerStepsWhenOccluded,
-        nearPlane);
+        nearPlane,
+        is_object_data,
+        cas_num);
 }
 
 /**
@@ -1216,17 +1292,6 @@ function loadOnFirstFrame(
     gLoadOnFirstFrameRan = true;
 }
 
-let gLastFrame = window.performance.now();
-let oldMilliseconds = 1000;
-function updateFPSCounter() {
-	let currentFrame = window.performance.now();
-	let milliseconds = currentFrame - gLastFrame;
-	let smoothMilliseconds = oldMilliseconds * (0.95) + milliseconds * 0.05;
-	let smoothFps = 1000 / smoothMilliseconds;
-	gLastFrame = currentFrame;
-	oldMilliseconds = smoothMilliseconds;
-    document.getElementById('fpsdisplay').innerHTML = "FPS: "+smoothFps.toFixed(1);
-}
 
 
 /**
@@ -1245,7 +1310,11 @@ function update(
     loadOnFirstFrame(
         dirUrl, filenameToLinkTranslator, useSparseGrid, sceneParams);
     updateCameraControls();
+
     renderProgressively(cas_num);
+
+
+
     gStats.update();
     // updateFPSCounter();
     requestAnimationFrame(

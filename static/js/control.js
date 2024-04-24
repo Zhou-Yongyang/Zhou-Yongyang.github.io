@@ -3,49 +3,29 @@
 const assetsURL = 'https://huggingface.co/zachzhang07/Vosh/resolve/main';
 // const assetsURL = 'https://huggingface.co/bennyguo/vmesh/resolve/main/scenes/chair-t1024';
 const rendererURL = "./renderer_vosh/renderer.html";
+// const assetsURL = "../Assets";
 
+
+//Mipnerf 360
 // const rendererURL = 'https://huggingface.co/zachzhang07/Vosh/tree/main/'
-function handleGardenButtonClick(){
-    var voshVersionCode = document.querySelector('input[name="garden-vosh"]:checked').value;
+
+function handleGoToSceneButtonClick(scenename, is_obj, cas_num){
+    var voshVersionCode = document.querySelector("input[name=\"" + scenename + "-vosh\"]:checked").value;
+
     
-    var voshQuality = document.querySelector('input[name="garden-quality"]:checked').value;
-    var sceneName = 'garden';
+    var voshQuality = document.querySelector("input[name=\"" + scenename + "-quality\"]:checked").value;
     var voshVersion = 'base';
 
     if(voshVersionCode==1){
         voshVersion = 'light';
     }
-    gotoRenderer(sceneName, voshVersion, voshQuality);
+    gotoRenderer(scenename, voshVersion, voshQuality, is_obj, cas_num);
 }
 
-function handleStumpButtonClick(){
-    var voshVersionCode = document.querySelector('input[name="stump-vosh"]:checked').value;
-    
-    var voshQuality = document.querySelector('input[name="stump-quality"]:checked').value;
-    var sceneName = 'stump';
-    var voshVersion = 'base';
 
-    if(voshVersionCode==1){
-        voshVersion = 'light';
-    }
-    gotoRenderer(sceneName, voshVersion, voshQuality);
-}
 
-function handleBicycleButtonClick(){
-    var voshVersionCode = document.querySelector('input[name="bicycle-vosh"]:checked').value;
-    
-    var voshQuality = document.querySelector('input[name="bicycle-quality"]:checked').value;
-    var sceneName = 'bicycle';
-    var voshVersion = 'base';
-
-    if(voshVersionCode==1){
-        voshVersion = 'light';
-    }
-    gotoRenderer(sceneName, voshVersion, voshQuality);
-}
-
-function gotoRenderer(sceneName, version ,quality){
-    var dirUrl = rendererURL + '?dir='+ assetsURL +'/' + sceneName + '_vosh_' + version + '/assets' + '&quality=' + quality;
+function gotoRenderer(sceneName, version ,quality, is_object, cas_num){
+    var dirUrl = rendererURL + '?dir='+ assetsURL +'/' + sceneName + '_' + version + '/assets' + '&quality=' + quality + '&is_object=' + is_object + '&cas_num=' + cas_num;
     console.log(dirUrl);
     window.open(dirUrl, '_blank');
 }

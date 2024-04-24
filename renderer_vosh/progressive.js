@@ -82,6 +82,7 @@ function setupProgressiveRendering(view) {
   const inv_world_T_clip = new THREE.Matrix4().multiplyMatrices(clip_T_camera, gCamera.matrixWorldInverse.clone());
 
   if (gRenderVosh !== 0) {
+    // gRenderer.setRenderTarget(null);
     gRenderer.setRenderTarget(gMeshRenderTarget);
     const displayMode = gDisplayMode - 0;
     for(let i=0;i<cas_num;i++){

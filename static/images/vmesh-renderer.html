@@ -1,0 +1,710 @@
+<html>
+  <head>
+    <title>VMesh Web Renderer</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
+    <style>
+      body,
+      div {
+        margin: 0;
+        padding: 0;
+      }
+      #wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+      }
+      #renderer {
+        border: 1px black solid;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wrapper"></div>
+  </body>
+
+  <script src="https://unpkg.com/pngjs@6.0.0/browser.js"></script>
+  <script
+    async
+    src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"
+  ></script>
+
+  <!-- use local copy of three.js -->
+  <!-- <script type="importmap">
+    {
+      "imports": {
+        "three": "/three.js-r146/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import WebGL from "/three.js-r146/examples/jsm/capabilities/WebGL.js";
+    import { OBJLoader } from "/three.js-r146/examples/jsm/loaders/OBJLoader.js";
+    import { OrbitControls } from "/three.js-r146/examples/jsm/controls/OrbitControls.js";
+    import Stats from "/three.js-r146/examples/jsm/libs/stats.module.js";
+    import { DRACOLoader } from "/three.js-r146/examples/jsm/loaders/DRACOLoader.js";
+    import { GUI } from "/three.js-r146/examples/jsm/libs/lil-gui.module.min.js"; -->
+
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.146.0?module";
+    import WebGL from "https://unpkg.com/three@0.146.0/examples/jsm/capabilities/WebGL.js?module";
+    import { OBJLoader } from "https://unpkg.com/three@0.146.0/examples/jsm/loaders/OBJLoader.js?module";
+    import { OrbitControls } from "https://unpkg.com/three@0.146.0/examples/jsm/controls/OrbitControls.js?module";
+    import Stats from "https://unpkg.com/three@0.146.0/examples/jsm/libs/stats.module.js?module";
+    import { DRACOLoader } from "https://unpkg.com/three@0.146.0/examples/jsm/loaders/DRACOLoader.js?module";
+    import { GUI } from "https://unpkg.com/three@0.146.0/examples/jsm/libs/lil-gui.module.min.js?module";
+
+    window.THREE = THREE; // debug use
+
+    const params = new URLSearchParams(
+      new URL(window.location.href).searchParams
+    );
+
+    const sceneName = params.get("scene");
+    const assetsPath = sceneName + "/";
+
+    function isTrue(value) {
+      return value === true || value === "true" || value === "1";
+    }
+
+    const configs = {
+      H: parseInt(params.get("H")) || Math.floor(window.innerHeight * 0.9),
+      W: parseInt(params.get("W")) || Math.floor(window.innerWidth * 0.9),
+      renderMode: parseInt(params.get("renderMode")) || 0,
+      components: {
+        mesh: isTrue(params.get("mesh")) || true,
+        volume: isTrue(params.get("volume")) || true,
+      },
+    };
+
+    window.configs = configs;
+
+    let camera, cameraRayMarching;
+    let sceneBoxNearPass, sceneBoxFarPass, sceneMeshPass, sceneHybridPass;
+    let materialBoxNearPass,
+      materialBoxFarPass,
+      materialMeshPass,
+      materialHybridPass;
+    let rtBoxNearPass, rtBoxFarPass, rtMeshPass;
+    let renderer, controls;
+
+    function setTextureAttributes(
+      texture,
+      {
+        format = THREE.RGBAFormat,
+        type = THREE.UnsignedByteType,
+        magFilter = THREE.LinearFilter,
+        minFilter = THREE.LinearFilter,
+        generateMipmaps = false,
+        needsUpdate = false,
+      }
+    ) {
+      texture.format = format;
+      texture.type = type;
+      texture.magFilter = magFilter;
+      texture.minFilter = minFilter;
+      texture.generateMipmaps = generateMipmaps;
+      texture.needsUpdate = needsUpdate;
+    }
+
+    function load2DTexture(path, attributes, onLoad = undefined) {
+      const texture = new THREE.TextureLoader().load(path, onLoad);
+      setTextureAttributes(texture, attributes);
+      return texture;
+    }
+
+    function load3DTexture(data, size, attributes) {
+      const texture = new THREE.Data3DTexture(data, size, size, size);
+      setTextureAttributes(texture, attributes);
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    // colorType: 0 = grayscale, no alpha, 2 = color, no alpha, 4 = grayscale & alpha, 6 = color & alpha
+    // FIXME: grayscale does not work
+    async function loadPNG(url, grayscale = false) {
+      const response = await fetch(url);
+      const buffer = await response.arrayBuffer();
+      const parser = new png.PNG({
+        bitDepth: 8,
+        inputColorType: grayscale ? 0 : 6,
+        colorType: grayscale ? 0 : 6,
+      });
+      return new Promise((resolve, reject) => {
+        parser.parse(buffer, (err, data) => {
+          resolve(data);
+        });
+      });
+    }
+    window.loadPNG = loadPNG;
+
+    async function init() {
+      if (WebGL.isWebGL2Available() === false) {
+        document.body.appendChild(WebGL.getWebGL2ErrorMessage());
+        console.log("Your browser does not support WebGL2!");
+        return;
+      }
+
+      // set up renderer
+      renderer = new THREE.WebGLRenderer({
+        powerPreference: "high-performance",
+        precision: "mediump",
+      });
+
+      renderer.setPixelRatio(1);
+      renderer.setSize(configs.W, configs.H);
+      renderer.setClearColor(new THREE.Color("rgb(0,0,0)"), 0.5);
+      renderer.domElement.id = "renderer";
+      document.getElementById("wrapper").appendChild(renderer.domElement);
+
+      // set up cameras
+      camera = new THREE.PerspectiveCamera(39, configs.W / configs.H, 0.5, 100);
+
+      camera.position.x = 4.0;
+      camera.position.y = 0.0;
+      camera.position.z = 2.0;
+      camera.up.set(0, 0, 1);
+
+      cameraRayMarching = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+      // set up orbit controls
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.screenSpacePanning = true;
+
+      // set up stats monitor
+      const stats = Stats();
+      document.body.appendChild(stats.dom);
+
+      // initialize scenes
+      sceneBoxNearPass = new THREE.Scene();
+      sceneBoxFarPass = new THREE.Scene();
+      sceneMeshPass = new THREE.Scene();
+      sceneMeshPass.background = new THREE.Color("rgb(255,255,255)");
+      sceneHybridPass = new THREE.Scene();
+
+      // load scene info json
+      const sceneInfo = await (await fetch(assetsPath + "info.json")).json();
+
+      // given a list of name and file location of shaders, load the shaders, and return an object with the name as key and the shader as value
+      const shaders = {
+        mesh_vert: "shaders/mesh.vert",
+        mesh_frag: "shaders/mesh.frag",
+        hybrid_vert: "shaders/hybrid.vert",
+        hybrid_frag: "shaders/hybrid.frag",
+        hybrid_dummy_frag: "shaders/hybrid_dummy.frag",
+        box_vert: "shaders/box.vert",
+        box_frag: "shaders/box.frag",
+      };
+      const shaderList = await Promise.all(
+        Object.entries(shaders).map(([name, path]) =>
+          fetch(path)
+            .then((response) => response.text())
+            .then((text) => [name, text])
+        )
+      );
+      const shaderMap = Object.fromEntries(shaderList);
+
+      // load mesh textures
+      const fresnelLUT = load2DTexture(
+        assetsPath + "fresnel_lut.png",
+        { format: THREE.RedFormat },
+        () => {}
+      );
+      const normalMap = load2DTexture(assetsPath + "normal.png", {}, () => {});
+      const diffuseMap = load2DTexture(
+        assetsPath + "diffuse.png",
+        {},
+        () => {}
+      );
+      const specTintMap = load2DTexture(
+        assetsPath + "spec_tint.png",
+        {},
+        () => {}
+      );
+      const featureMap = load2DTexture(
+        assetsPath + "feature.png",
+        {},
+        () => {}
+      );
+
+      const envmaps = [];
+      for (let i = 0; i < 3; ++i) {
+        const envmap = new THREE.CubeTextureLoader()
+          .setPath(assetsPath)
+          .load([
+            "envmap" + i + "-0.png",
+            "envmap" + i + "-1.png",
+            "envmap" + i + "-2.png",
+            "envmap" + i + "-3.png",
+            "envmap" + i + "-4.png",
+            "envmap" + i + "-5.png",
+          ]);
+        envmap.magFilter = THREE.LinearFilter;
+        envmap.minFilter = THREE.LinearFilter;
+        envmaps.push(envmap);
+      }
+
+      // define mesh pass render targets
+      rtMeshPass = new THREE.WebGLMultipleRenderTargets(
+        configs.W,
+        configs.H,
+        2
+      );
+      // RGB
+      setTextureAttributes(rtMeshPass.texture[0], {
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType,
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        generateMipmaps: false,
+      });
+      // xyz
+      setTextureAttributes(rtMeshPass.texture[1], {
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType,
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        generateMipmaps: false,
+      });
+
+      // define mesh pass material
+      materialMeshPass = new THREE.RawShaderMaterial({
+        side: THREE.DoubleSide,
+        vertexShader: shaderMap.mesh_vert,
+        fragmentShader: shaderMap.mesh_frag,
+        uniforms: {
+          tNormal: { value: normalMap },
+          tDiffuse: { value: diffuseMap },
+          tSpecTint: { value: specTintMap },
+          tFeature: { value: featureMap },
+          tFresnel: { value: fresnelLUT },
+          envmapR: { value: envmaps[0] },
+          envmapG: { value: envmaps[1] },
+          envmapB: { value: envmaps[2] },
+          display: { value: configs.components.mesh },
+          renderMode: { value: configs.renderMode },
+        },
+        glslVersion: THREE.GLSL3,
+      });
+
+      // load .obj mesh
+      // new OBJLoader().load(assetsPath + "model.obj", function (geometry) {
+      //   geometry.traverse(function (child) {
+      //     if (child.type == "Mesh") {
+      //       child.material = materialMeshPass;
+      //     }
+      //   });
+      //   sceneMeshPass.add(geometry);
+      // });
+
+      // load DRACO mesh
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath(
+        "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
+      );
+      dracoLoader.load(assetsPath + "model.drc", function (geometry) {
+        sceneMeshPass.add(new THREE.Mesh(geometry, materialMeshPass));
+      });
+
+      // define box pass render targets
+      rtBoxNearPass = new THREE.WebGLMultipleRenderTargets(
+        configs.W,
+        configs.H,
+        1
+      );
+      setTextureAttributes(rtBoxNearPass.texture[0], {
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType,
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        generateMipmaps: false,
+      });
+
+      rtBoxFarPass = new THREE.WebGLMultipleRenderTargets(
+        configs.W,
+        configs.H,
+        1
+      );
+      setTextureAttributes(rtBoxFarPass.texture[0], {
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType,
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        generateMipmaps: false,
+      });
+
+      // define box pass material
+      const materialBoxNearPass = new THREE.RawShaderMaterial({
+        side: THREE.FrontSide,
+        vertexShader: shaderMap.box_vert,
+        fragmentShader: shaderMap.box_frag,
+        glslVersion: THREE.GLSL3,
+      });
+
+      const materialBoxFarPass = new THREE.RawShaderMaterial({
+        side: THREE.BackSide,
+        vertexShader: shaderMap.box_vert,
+        fragmentShader: shaderMap.box_frag,
+        glslVersion: THREE.GLSL3,
+      });
+
+      // define box geometry
+      const volBBox = sceneInfo["vol_bbox"] || [
+        [-1, 1],
+        [-1, 1],
+        [-1, 1],
+      ];
+      const boxGeometry = new THREE.BoxGeometry(
+        volBBox[0][1] - volBBox[0][0],
+        volBBox[1][1] - volBBox[1][0],
+        volBBox[2][1] - volBBox[2][0]
+      );
+      boxGeometry.doubleSided = true;
+      boxGeometry.translate(
+        (volBBox[0][1] + volBBox[0][0]) / 2,
+        (volBBox[1][1] + volBBox[1][0]) / 2,
+        (volBBox[2][1] + volBBox[2][0]) / 2
+      );
+      sceneBoxNearPass.add(new THREE.Mesh(boxGeometry, materialBoxNearPass));
+      sceneBoxFarPass.add(new THREE.Mesh(boxGeometry, materialBoxFarPass));
+
+      if (sceneInfo["has_vol"]) {
+        const tex3dSize =
+          sceneInfo["hash_map_size"] *
+          (sceneInfo["vol_blk_size"] + sceneInfo["vol_trilerp"] * 2);
+
+        // load volume textures
+        const volDensityImg = await loadPNG(assetsPath + "vol_density.png");
+        const volDensity = load3DTexture(
+          new Float32Array(volDensityImg.data.buffer),
+          tex3dSize,
+          {
+            format: THREE.RedFormat,
+            type: THREE.FloatType,
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+          }
+        );
+        const volDiffuseImg = await loadPNG(assetsPath + "vol_diffuse.png");
+        const volDiffuse = load3DTexture(
+          new Uint8Array(volDiffuseImg.data.buffer),
+          tex3dSize,
+          {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+          }
+        );
+        const volSpecTintImg = await loadPNG(assetsPath + "vol_spec_tint.png");
+        const volSpecTint = load3DTexture(
+          new Uint8Array(volSpecTintImg.data.buffer),
+          tex3dSize,
+          {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+          }
+        );
+        const volFeatureImg = await loadPNG(assetsPath + "vol_feature.png");
+        const volFeature = load3DTexture(
+          new Uint8Array(volFeatureImg.data.buffer),
+          tex3dSize,
+          {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+          }
+        );
+        const volNormalImg = await loadPNG(assetsPath + "vol_normal.png");
+        const volNormal = load3DTexture(
+          new Uint8Array(volNormalImg.data.buffer),
+          tex3dSize,
+          {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+          }
+        );
+
+        const offsetMapImg = await loadPNG(assetsPath + "offset_map.png");
+        const offsetMap = load3DTexture(
+          new Uint8Array(offsetMapImg.data.buffer),
+          sceneInfo["offset_map_size"],
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        const occMapImg512 = await loadPNG(assetsPath + "occ_map_512.png");
+        const occMap512 = load3DTexture(
+          new Uint8Array(occMapImg512.data.buffer),
+          256,
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        const occMapImg256 = await loadPNG(assetsPath + "occ_map_256.png");
+        const occMap256 = load3DTexture(
+          new Uint8Array(occMapImg256.data.buffer),
+          128,
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        const occMapImg128 = await loadPNG(assetsPath + "occ_map_128.png");
+        const occMap128 = load3DTexture(
+          new Uint8Array(occMapImg128.data.buffer),
+          64,
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        const occMapImg64 = await loadPNG(assetsPath + "occ_map_64.png");
+        const occMap64 = load3DTexture(
+          new Uint8Array(occMapImg64.data.buffer),
+          32,
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        const occMapImg32 = await loadPNG(assetsPath + "occ_map_32.png");
+        const occMap32 = load3DTexture(
+          new Uint8Array(occMapImg32.data.buffer),
+          16,
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        const occMapImg16 = await loadPNG(assetsPath + "occ_map_16.png");
+        const occMap16 = load3DTexture(
+          new Uint8Array(occMapImg16.data.buffer),
+          8,
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        const occMapImg8 = await loadPNG(assetsPath + "occ_map_8.png");
+        const occMap8 = load3DTexture(
+          new Uint8Array(occMapImg8.data.buffer),
+          4,
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        const occMapImg4 = await loadPNG(assetsPath + "occ_map_4.png");
+        const occMap4 = load3DTexture(
+          new Uint8Array(occMapImg4.data.buffer),
+          2,
+          {
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType,
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+          }
+        );
+
+        // define hybrid pass material
+        materialHybridPass = new THREE.RawShaderMaterial({
+          vertexShader: shaderMap.hybrid_vert,
+          fragmentShader: shaderMap.hybrid_frag,
+          uniforms: {
+            tRastColor: { value: rtMeshPass.texture[0] },
+            tRastPos: { value: rtMeshPass.texture[1] },
+            tNear: { value: rtBoxNearPass.texture[0] },
+            tFar: { value: rtBoxFarPass.texture[0] },
+
+            tOffsetMap: { value: offsetMap },
+            tOccMap: { value: occMap512 },
+            // tOccMap16: { value: occMap16 },
+            tOccMap32: { value: occMap32 },
+            // tOccMap4: { value: occMap4 },
+
+            tVolDensity: { value: volDensity },
+            tVolDiffuse: { value: volDiffuse },
+            tVolSpecTint: { value: volSpecTint },
+            tVolFeature: { value: volFeature },
+            tVolNormal: { value: volNormal },
+            tFresnel: { value: fresnelLUT },
+
+            envmapR: { value: envmaps[0] },
+            envmapG: { value: envmaps[1] },
+            envmapB: { value: envmaps[2] },
+
+            volBBoxMin: {
+              value: new THREE.Vector3(
+                volBBox[0][0],
+                volBBox[1][0],
+                volBBox[2][0]
+              ),
+            },
+            volBBoxMax: {
+              value: new THREE.Vector3(
+                volBBox[0][1],
+                volBBox[1][1],
+                volBBox[2][1]
+              ),
+            },
+            volBBoxSize: {
+              value: new THREE.Vector3(
+                volBBox[0][1] - volBBox[0][0],
+                volBBox[1][1] - volBBox[1][0],
+                volBBox[2][1] - volBBox[2][0]
+              ),
+            },
+            volResolution: { value: sceneInfo["vol_resolution"] },
+            gridResolution: {
+              value: Math.floor(
+                sceneInfo["vol_resolution"] / sceneInfo["vol_blk_size"]
+              ),
+            },
+            volBlkSize: { value: sceneInfo["vol_blk_size"] },
+            volTrilerp: { value: sceneInfo["vol_trilerp"] },
+            volDataSize: { value: sceneInfo["vol_data_size"] },
+            hashMapSize: { value: sceneInfo["hash_map_size"] },
+            offsetMapSize: { value: sceneInfo["offset_map_size"] },
+            tex3dSize: { value: tex3dSize },
+
+            hasVol: { value: sceneInfo["has_vol"] },
+            display: { value: configs.components.volume },
+            renderMode: { value: configs.renderMode },
+          },
+          glslVersion: THREE.GLSL3,
+        });
+      } else {
+        // define hybrid pass material when there is no volume data
+        materialHybridPass = new THREE.RawShaderMaterial({
+          vertexShader: shaderMap.hybrid_vert,
+          fragmentShader: shaderMap.hybrid_dummy_frag,
+          uniforms: {
+            tRastColor: { value: rtMeshPass.texture[0] },
+            tRastPos: { value: rtMeshPass.texture[1] },
+            tNear: { value: rtBoxNearPass.texture[0] },
+            tFar: { value: rtBoxFarPass.texture[0] },
+
+            hasVol: { value: sceneInfo["has_vol"] },
+            display: { value: configs.components.volume },
+            renderMode: { value: configs.renderMode },
+          },
+          glslVersion: THREE.GLSL3,
+        });
+      }
+
+      // define hybrid pass geometry
+      sceneHybridPass.add(
+        new THREE.Mesh(new THREE.PlaneGeometry(2, 2), materialHybridPass)
+      );
+
+      // setup GUI
+      const gui = new GUI();
+
+      function onResize() {
+        camera.aspect = configs.W / configs.H;
+        camera.updateProjectionMatrix();
+        renderer.setSize(configs.W, configs.H);
+        rtMeshPass.setSize(configs.W, configs.H);
+        rtBoxNearPass.setSize(configs.W, configs.H);
+        rtBoxFarPass.setSize(configs.W, configs.H);
+        render();
+      }
+
+      gui.add(configs, "H", 800, 4096).step(1).listen().onChange(onResize);
+      gui.add(configs, "W", 800, 4096).step(1).listen().onChange(onResize);
+
+      gui
+        .add(configs, "renderMode", {
+          RGB: 0,
+          Normal: 1,
+          Diffuse: 2,
+          "Specular Tint": 3,
+          "Fresnel Property": 4,
+        })
+        .listen()
+        .onChange((v) => {
+          console.log("configs.renderMode", v);
+          materialMeshPass.uniforms["renderMode"].value = v;
+          materialHybridPass.uniforms["renderMode"].value = v;
+          render();
+        });
+      const gfComponents = gui.addFolder("components");
+      gfComponents
+        .add(configs.components, "mesh")
+        .listen()
+        .onChange((v) => {
+          console.log("configs.components.mesh", v);
+          materialMeshPass.uniforms["display"].value = v;
+          render();
+        });
+      gfComponents
+        .add(configs.components, "volume")
+        .listen()
+        .onChange((v) => {
+          console.log("configs.components.volume", v);
+          materialHybridPass.uniforms["display"].value = v;
+          render();
+        });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        render();
+        stats.update();
+      }
+
+      function render() {
+        camera.updateMatrix();
+
+        renderer.setRenderTarget(rtBoxNearPass);
+        renderer.render(sceneBoxNearPass, camera);
+
+        renderer.setRenderTarget(rtBoxFarPass);
+        renderer.render(sceneBoxFarPass, camera);
+
+        renderer.setRenderTarget(rtMeshPass);
+        renderer.render(sceneMeshPass, camera);
+
+        renderer.setRenderTarget(null);
+        renderer.render(sceneHybridPass, cameraRayMarching);
+      }
+
+      animate();
+    }
+
+    init().then(() => {
+      console.log("Initialized.");
+    });
+  </script>
+</html>

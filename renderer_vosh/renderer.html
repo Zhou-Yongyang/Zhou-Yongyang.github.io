@@ -128,6 +128,26 @@
 <body>
 
 <div id=error></div>
+<style>
+    #option-box {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    #display-mode {
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #f8f8f8;
+    }
+
+    #display-mode option {
+        padding: 5px;
+    }
+</style>
+
+
 
 <div id="viewspacecontainer">
     <div id="Loading">
@@ -135,6 +155,20 @@
             <span id="image-progress">Loading images: 0/?</span>
         </h4>
     </div>
+    <div id="option-box">
+        <label for="display-mode">Display mode:</label>
+        <select id="display-mode">
+            <option value="0">Full</option>
+            <option value="1">Diffuse</option>
+            <option value="2">Feature</option>
+            <option value="3">View dependent</option>
+            <option value="4">Coarse Grid</option>
+            <option value="5">Mesh component</option>
+            <option value="6">Volume component</option>
+            <option value="7">Mesh with coarse grid</option>
+        </select>
+    </div>
+    
     <div id="loading-container">
         <div id="topleft" class="loading-bgbox"></div>
         <div id="bottomleft" class="loading-bgbox"></div>
@@ -147,6 +181,7 @@
         <div id="fpsdisplay"></div>
         <div id="sizedisplay"></div> -->
 </div>
+
 
 <!--
 <script src="https://unpkg.com/three@0.113.1/build/three.js"></script>

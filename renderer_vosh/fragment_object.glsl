@@ -35,58 +35,12 @@ float max3 (vec3 v) {
 
 // Projective contraction
 vec3 contract(vec3 x) {
-    vec3 xAbs = abs(x);
-    float xMax = max3(xAbs);
-    if (xMax <= 1.0) {
-        return x;
-    }
-    float scale = 1.0 / xMax;
-    vec3 z = scale * x;
-    // note that z.a = sign(z.a) where a is the the argmax component
-    if (xAbs.x >= xAbs.y && xAbs.x >= xAbs.z) {
-        z.x *= (2.0 - scale);// argmax = 0
-    } else if (xAbs.y >= xAbs.x && xAbs.y >= xAbs.z) {
-        z.y *= (2.0 - scale);// argmax = 1
-    } else {
-        z.z *= (2.0 - scale);// argmax = 2
-    }
-    return z;
+    return x;
 }
 
 // Inverse projective contraction
 vec3 inverseContract(vec3 z) {
-    vec3 zAbs = abs(z);
-    float zMax = max3(zAbs);
-    if (zMax <= 1.0) {
-        return z;
-    }
-    float eps = 1e-6;
-    float invZMax = max(eps, 2.0 - zMax);
-    float scale = 1.0 / invZMax;
-    vec3 x = scale * z;
-    if (zAbs.x >= zAbs.y && zAbs.x >= zAbs.z) {
-        x.x = sign(x.x) * scale;// argmax = 0
-    } else if (zAbs.y >= zAbs.x && zAbs.y >= zAbs.z) {
-        x.y = sign(x.y) * scale;// argmax = 1
-    } else {
-        x.z = sign(x.z) * scale;// argmax = 2
-    }
-    return x;
-}
-
-// Sorts an array of length 5 in-place. This is hardcoded to 5 since a ray
-// traverses up to 5 quadrants.
-void sort5(inout float[5] array, int arrayLength) {
-    float t;
-    for (int i = 0; i < arrayLength; ++i) {
-        for (int j = i+1; j < arrayLength; ++j) {
-            if (array[j] < array[i]) {
-                t = array[i];
-                array[i] = array[j];
-                array[j] = t;
-            }
-        }
-    }
+    return z;
 }
 
 // A solution is invalid if it does not lie on the plane or is outside of 
@@ -137,63 +91,11 @@ vec3 h(vec3 o, vec3 d, vec3 p) {
     return (p - o) / d;
 }
 
-vec3 h0(vec3 o, vec3 d, vec3 p) {
-    vec3 t;
-    t.x = (1.0 / (2.0 - p.x) - o.x) / d.x;
-    t.y = (o.y - p.y * o.x) / (p.y * d.x - d.y);
-    t.z = (o.z - p.z * o.x) / (p.z * d.x - d.z);
-    return t;
-}
 
-vec3 h1(vec3 o, vec3 d, vec3 p) {
-    vec3 t;
-    t.x = (o.x - p.x * o.y) / (p.x * d.y - d.x);
-    t.y = (1.0 / (2.0 - p.y) - o.y) / d.y;
-    t.z = (o.z - p.z * o.y) / (p.z * d.y - d.z);
-    return t;
-}
 
-vec3 h2(vec3 o, vec3 d, vec3 p) {
-    vec3 t;
-    t.x = (o.x - p.x * o.z) / (p.x * d.z - d.x);
-    t.y = (o.y - p.y * o.z) / (p.y * d.z - d.y);
-    t.z = (1.0 / (2.0 - p.z) - o.z) / d.z;
-    return t;
-}
-
-vec3 h3(vec3 o, vec3 d, vec3 p) {
-    vec3 t;
-    t.x = (1.0 / (-p.x - 2.0) - o.x) / d.x;
-    t.y = -(o.x*p.y + o.y) / (d.x*p.y + d.y);
-    t.z = -(o.x*p.z + o.z) / (d.x*p.z + d.z);
-    return t;
-}
-
-vec3 h4(vec3 o, vec3 d, vec3 p) {
-    vec3 t;
-    t.x = -(o.y*p.x + o.x) / (d.y*p.x + d.x);
-    t.y = (1.0 / (-p.y - 2.0) - o.y) / d.y;
-    t.z = -(o.y*p.z + o.z) / (d.y*p.z + d.z);
-    return t;
-}
-
-vec3 h5(vec3 o, vec3 d, vec3 p) {
-    vec3 t;
-    t.x = -(o.z*p.x + o.x) / (d.z*p.x + d.x);
-    t.y = -(o.z*p.y + o.y) / (d.z*p.y + d.y);
-    t.z = (1.0 / (-p.z - 2.0) - o.z) / d.z;
-    return t;
-}
-
-// Intersects ray with all seven quadrants to obtain t-values at which the ray
-// exits a quadrant. We need to know these t-values since whenever we 
-// enter a new quadrant the origin and direction of the ray in contracted space
-// needs to be recomputed.
-float[5] findTraversedQuadrants(vec3 o, vec3 d, float near) {
-    float[5] listQuadrantTMax = float[](INF, INF, INF, INF, INF);// Rays traverse up to 5 quadrants
+float findTraversedQuadrants(vec3 o, vec3 d, float near) {
+    float listQuadrantTMax;;// Rays traverse up to 5 quadrants
     int numQuadrantsTraversed = 0;
-    float c1 = 1.0 - 1e-5;
-    float c2 = 2.0 - 1e-4;
     vec3 aabbMin;
     vec3 aabbMax;
     vec3 t0;
@@ -201,8 +103,8 @@ float[5] findTraversedQuadrants(vec3 o, vec3 d, float near) {
     float tMax;
 
     // core region
-    aabbMin = vec3(-1.0, -1.0, -1.0);
-    aabbMax = vec3(1.0, 1.0, 1.0);
+    aabbMin = vec3(-2.0, -2.0, -2.0);
+    aabbMax = vec3(2.0, 2.0, 2.0);
     t0 = h(o, d, aabbMin);
     t1 = h(o, d, aabbMax);
     tMax = getTMax(o, d, t0, t1, aabbMin, aabbMax);
@@ -211,79 +113,12 @@ float[5] findTraversedQuadrants(vec3 o, vec3 d, float near) {
     // (tMax < near). When a quadrant is not traversed, getTMax returns -INF
     // and therefore this check also discards these values.
     if (tMax >= near) {
-        listQuadrantTMax[numQuadrantsTraversed] = tMax;
-        numQuadrantsTraversed++;
+        listQuadrantTMax = tMax;
     }
-
-    // argmax(|o+t*d|) = 0, o[0]+t*d[0] >= 0
-    aabbMin = vec3(c1, -c1, -c1);
-    aabbMax = vec3(c2, c1, c1);
-    t0 = h0(o, d, aabbMin);
-    t1 = h0(o, d, aabbMax);
-    tMax = getTMax(o, d, t0, t1, aabbMin, aabbMax);
-    if (tMax >= near) {
-        listQuadrantTMax[numQuadrantsTraversed] = tMax;
-        numQuadrantsTraversed++;
-    }
-
-    // argmax(|o+t*d|) = 1, o[1]+t*d[1] >= 0
-    aabbMin = vec3(-c1, c1, -c1);
-    aabbMax = vec3(c1, c2, c1);
-    t0 = h1(o, d, aabbMin);
-    t1 = h1(o, d, aabbMax);
-    tMax = getTMax(o, d, t0, t1, aabbMin, aabbMax);
-    if (tMax >= near) {
-        listQuadrantTMax[numQuadrantsTraversed] = tMax;
-        numQuadrantsTraversed++;
-    }
-
-    // argmax(|o+t*d|) = 2, o[2]+t*d[2] >= 0
-    aabbMin = vec3(-c1, -c1, c1);
-    aabbMax = vec3(c1, c1, c2);
-    t0 = h2(o, d, aabbMin);
-    t1 = h2(o, d, aabbMax);
-    tMax = getTMax(o, d, t0, t1, aabbMin, aabbMax);
-    if (tMax >= near) {
-        listQuadrantTMax[numQuadrantsTraversed] = tMax;
-        numQuadrantsTraversed++;
-    }
-
-    // argmax(|o+t*d|) = 0, o[0]+t*d[0] < 0
-    aabbMin = vec3(-c2, -c1, -c1);
-    aabbMax = vec3(-c1, c1, c1);
-    t0 = h3(o, d, aabbMin);
-    t1 = h3(o, d, aabbMax);
-    tMax = getTMax(o, d, t0, t1, aabbMin, aabbMax);
-    if (tMax >= near) {
-        listQuadrantTMax[numQuadrantsTraversed] = tMax;
-        numQuadrantsTraversed++;
-    }
-
-    // argmax(|o+t*d|) = 1, o[1]+t*d[1] < 0
-    aabbMin = vec3(-c1, -c2, -c1);
-    aabbMax = vec3(c1, -c1, c1);
-    t0 = h4(o, d, aabbMin);
-    t1 = h4(o, d, aabbMax);
-    tMax = getTMax(o, d, t0, t1, aabbMin, aabbMax);
-    if (tMax >= near) {
-        listQuadrantTMax[numQuadrantsTraversed] = tMax;
-        numQuadrantsTraversed++;
-    }
-
-    // argmax(|o+t*d|) = 2, o[2]+t*d[2] < 0
-    aabbMin = vec3(-c1, -c1, -c2);
-    aabbMax = vec3(c1, c1, -c1);
-    t0 = h5(o, d, aabbMin);
-    t1 = h5(o, d, aabbMax);
-    tMax = getTMax(o, d, t0, t1, aabbMin, aabbMax);
-    if (tMax >= near) {
-        listQuadrantTMax[numQuadrantsTraversed] = tMax;
-        numQuadrantsTraversed++;
-    }
-
-    sort5(listQuadrantTMax, numQuadrantsTraversed);
     return listQuadrantTMax;
 }
+
+
 
 struct QuadrantSetupResults {
     vec3 oContracted;// ray origin in contracted space
@@ -303,26 +138,16 @@ QuadrantSetupResults quadrantSetup(vec3 o, vec3 d, float tP, float tQ) {
 
     // Which quadrant did we enter?
     vec3 xP = o + tP * d;
-    vec3 xAbs = abs(xP);
-    float xMax = max3(xAbs);
+    // vec3 xAbs = abs(xP);
+    // float xMax = max3(xAbs);
 
     // Get the AABB of the quadrant the point x is in
     // Non-squash case, central quadrant:
-    vec3 aabbMin = vec3(-1.0, -1.0, -1.0);
-    vec3 aabbMax = vec3(1.0, 1.0, 1.0);
-    if (xMax > 1.0) {
-        // The point is inside in one of the outer quadrants ("squash zone")
-        if (xAbs.x >= xAbs.y && xAbs.x >= xAbs.z) {
-            aabbMin.x = xP.x > 0.0 ? 1.0 : -2.0;// argmax = 0
-            aabbMax.x = xP.x > 0.0 ? 2.0 : -1.0;
-        } else if (xAbs.y >= xAbs.x && xAbs.y >= xAbs.z) {
-            aabbMin.y = xP.y > 0.0 ? 1.0 : -2.0;// argmax = 1
-            aabbMax.y = xP.y > 0.0 ? 2.0 : -1.0;
-        } else {
-            aabbMin.z = xP.z > 0.0 ? 1.0 : -2.0;// argmax = 2
-            aabbMax.z = xP.z > 0.0 ? 2.0 : -1.0;
-        }
-    }
+    // vec3 aabbMin = vec3(-1.0, -1.0, -1.0);
+    // vec3 aabbMax = vec3(1.0, 1.0, 1.0);
+    vec3 aabbMin = vec3(-2.0, -2.0, -2.0);
+    vec3 aabbMax = vec3(2.0, 2.0, 2.0);
+
 
     // Estimate the direction of the ray in contracted space by computing the
     // vector difference with two different t-values that are guanteed to
@@ -331,18 +156,6 @@ QuadrantSetupResults quadrantSetup(vec3 o, vec3 d, float tP, float tQ) {
     vec3 zQ = contract(o + tQ * d);
     r.dContracted = normalize(zQ - r.oContracted);
 
-    // When is the ray exiting the current quadrant? We need this value in
-    // order to know when we enter a new quadrant or when to terminate ray marching.
-    // Note that im findTraversedQuadrants word-space t-values are computed, while
-    // we compute here contraction-space t-values. The world-space t-values are
-    // needed to robustly obtain two points (tP and tQ) that are guranteed to lie
-    // within a quadrant. With help of these values we can generate two points
-    // in contracted space from which we can estimate the ray origin and direction
-    // in contracted space. However, once we raymarch in contracted space we need
-    // the contraction-space t-value to conveniently check whether we are still
-    // in the same quadrant. Alternatively, one could convert the contraction-
-    // space point to a world-space point and estimate a world space t-value, but
-    // this has been found to be numerically unstable.
     r.quadrantTMinMaxContracted = rayAabbIntersection(aabbMin, aabbMax, r.oContracted, 1.0 / r.dContracted);
     return r;
 }
@@ -416,7 +229,10 @@ void main() {
     const int DISPLAY_VOLUME = 6;
     // Only shows the rendered mesh and grid
     const int DISPLAY_MESH_AND_GRID = 7;
+
+
     
+    bool empty = true;
     int use_displayMode = displayMode;
     // float w = 1080.0 / 1920.0;
     // if(gl_FragCoord.x * w <= gl_FragCoord.y){
@@ -433,31 +249,31 @@ void main() {
     float mesh_screen_depth = texture2D(tDepth, vUv).x;
     float mesh_ndc_depth = (mesh_screen_depth-0.5)*2.0;
 
-
-    bool empty = true;
     float visibility = 1.0;
     vec3 accumulatedColor = vec3(0.0, 0.0, 0.0);
     vec4 accumulatedFeatures = vec4(0.0, 0.0, 0.0, 0.0);
-    int step_ray = 0;
-
 
     #ifdef HAS_VOL
     #ifdef USE_SPARSE_GRID
-        ivec3 iGridSize = ivec3(round(sparseGridGridSize));
-        int iBlockSize = int(round(dataBlockSize));
-        ivec3 iBlockGridBlocks = (iGridSize + iBlockSize - 1) / iBlockSize;
-        ivec3 iBlockGridSize = iBlockGridBlocks * iBlockSize;
-        vec3 blockGridSize = vec3(iBlockGridSize);
+        ivec3 iGridSize = ivec3(round(sparseGridGridSize));     //1024
+        int iBlockSize = int(round(dataBlockSize));             //8
+        ivec3 iBlockGridBlocks = (iGridSize + iBlockSize - 1) / iBlockSize; //(8+1024-1) / 8
+        ivec3 iBlockGridSize = iBlockGridBlocks * iBlockSize;               //1031
+        vec3 blockGridSize = vec3(iBlockGridSize);                          //1032
     #endif
 
-    float[5] listQuadrantTMax = findTraversedQuadrants(originWorld,
+    // float[5] listQuadrantTMax = findTraversedQuadrants(originWorld,
+    // directionWorld, nearWorld);
+    float listQuadrantTMax = findTraversedQuadrants(originWorld,
     directionWorld, nearWorld);
 
     float tP = nearWorld;
-    float tQ = mix(nearWorld, listQuadrantTMax[0], 0.5);
+    // float tQ = mix(nearWorld, listQuadrantTMax[0], 0.5);
+    float tQ = mix(nearWorld, listQuadrantTMax, 0.5);
 
     QuadrantSetupResults r = quadrantSetup(originWorld, directionWorld, tP, tQ);
-    float tContracted = 0.0;
+    // float tContracted = 0.0;
+    float tContracted = r.quadrantTMinMaxContracted.x;
     int quadrantIndex = 1;
 
     float tBlockMax_L0 = -INF;
@@ -467,6 +283,7 @@ void main() {
     float tBlockMax_L4 = -INF;
 
 
+    int step_ray = 0;
 
     #ifdef USE_TRIPLANE
         #define GRID_SIZE triplaneGridSize
@@ -492,8 +309,8 @@ void main() {
                 float stepSizeContracted = origStepSizeContracted;
             #endif
 
-
             // check if the ray is exiting the current quadrant
+
             if (tContracted > r.quadrantTMinMaxContracted.y) {
                 vec3 z = r.oContracted + r.quadrantTMinMaxContracted.y * r.dContracted;
 
@@ -516,23 +333,8 @@ void main() {
                     visibility = 0.0;
                     break;
                 }
-
-                // sStup ray in the new quadrant
-                // By using the precomputed t-values we can find two points that are guranteed
-                // to lie within the new quadrant.
-                tP = mix(listQuadrantTMax[quadrantIndex - 1], listQuadrantTMax[quadrantIndex], 0.1);
-                tQ = mix(listQuadrantTMax[quadrantIndex - 1], listQuadrantTMax[quadrantIndex], 0.9);
-                r = quadrantSetup(originWorld, directionWorld, tP, tQ);
-                tContracted = r.quadrantTMinMaxContracted.x;
-                quadrantIndex++;
-
-                // Reset all tMax values to force occupancy queries
-                tBlockMax_L0 = -INF;
-                tBlockMax_L1 = -INF;
-                tBlockMax_L2 = -INF;
-                tBlockMax_L3 = -INF;
-                tBlockMax_L4 = -INF;
             }
+
 
             // Position of current sample in contracted space
             vec3 z = r.oContracted + tContracted * r.dContracted;
@@ -542,11 +344,10 @@ void main() {
             vec4 clipz = inv_world_T_clip * vec4(wz, 1.0);
             float mesh_clip_depth = mesh_ndc_depth * clipz.w;
 
-            
 
             // !Display mode
             if(clipz.z >= mesh_clip_depth && mesh_clip_depth < clipz.w){
-                  empty = false;
+                empty = false;
                 if(use_displayMode == DISPLAY_VOLUME){
                     accumulatedColor += visibility * vec3(1.0, 1.0, 1.0);
                     accumulatedFeatures += visibility * vec4(0.0, 0.0, 0.0, 1.0);
@@ -569,16 +370,14 @@ void main() {
             }
 
 
-            // !Speed mode
+            // !Speed test mode
             // if(clipz.z >= mesh_clip_depth && mesh_clip_depth < clipz.w && use_displayMode != DISPLAY_VOLUME){
-            //             empty = false;
-            //             accumulatedColor += visibility * texture(tDiff, vUv).rgb;
-            //             accumulatedFeatures += visibility * texture(tSpec, vUv).rgba;
-            //             visibility = 0.0;
-            //             continue;
+            //     empty = false;
+            //     accumulatedColor += visibility * texture(tDiff, vUv).rgb;
+            //     accumulatedFeatures += visibility * texture(tSpec, vUv).rgba;
+            //     visibility = 0.0;
+            //     continue;
             // }
-
-
 
             // Hierarchical empty space skipping
             vec3 invDContracted = 1.0 / r.dContracted;
@@ -588,9 +387,9 @@ void main() {
             QUERY_OCCUPANCY_GRID(tBlockMax_L2, occupancyGrid_L2, voxelSizeOccupancy_L2, gridSizeOccupancy_L2)
             QUERY_OCCUPANCY_GRID(tBlockMax_L3, occupancyGrid_L3, voxelSizeOccupancy_L3, gridSizeOccupancy_L3)
             QUERY_OCCUPANCY_GRID(tBlockMax_L4, occupancyGrid_L4, voxelSizeOccupancy_L4, gridSizeOccupancy_L4)
+
+
             empty = false;
-
-
             // We are in occupied space
             // compute grid positions for the sparse 3D grid and on the triplane planes
             #ifdef USE_SPARSE_GRID
@@ -760,8 +559,14 @@ void main() {
     }
 
 
-
     // Run view-dependency network
+    // if ((use_displayMode == DISPLAY_NORMAL ||
+    // use_displayMode == DISPLAY_VIEW_DEPENDENT ||
+    // use_displayMode == DISPLAY_MESH ||
+    // use_displayMode == DISPLAY_VOLUME)) {
+    //     accumulatedColor += evaluateNetwork(accumulatedColor, accumulatedFeatures, worldspaceROpengl * directionWorld);
+    // }
+
     if ((use_displayMode == DISPLAY_NORMAL ||
     use_displayMode == DISPLAY_VIEW_DEPENDENT ||
     use_displayMode == DISPLAY_MESH ||
@@ -770,7 +575,5 @@ void main() {
     }
 
 
-
     gl_FragColor = vec4(accumulatedColor, 1.0);
-    // gl_FragColor = vec4(float(step_ray) / float(maxStep), 0.0, 0.0, 1.0);
 } 
