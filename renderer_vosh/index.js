@@ -609,7 +609,7 @@ function loadMeshAssets(meshUrl, cas_num) {
                     }
                 });
 
-                console.log('[INFO] loaded mesh:', meshUrl + '/mesh_' + cas.toString() + '.obj');
+                console.log('[INFO] loaded mesh:', meshUrl + '/mesh_' + cas.toString() + '.glb');
                 resolve(object.scene);
             });
         }));
@@ -1004,10 +1004,6 @@ function initFromParameters() {
     // const dirUrl = '../Assets/garden_light/assets'
     // const dirUrl = '../Assets/stump_light/assets'
     // const dirUrl = '../Assets/bicycle_test/assets'
-
-
-
-
 
     // const dirUrl = '../Assets/chair_light/assets'
     // const dirUrl = '../Assets/ficus_light/assets'
