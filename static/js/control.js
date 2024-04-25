@@ -1,6 +1,7 @@
 
 // const rendererURL = 'http://127.0.0.1:5500/renderer_vosh/renderer.html'
-const assetsURL = 'https://huggingface.co/zachzhang07/Vosh/resolve/main';
+// const assetsURL = 'https://huggingface.co/zachzhang07/Vosh/resolve/main';
+const assetsURL = 'https://huggingface.co/bit-zyy/Vosh/resolve/main';
 const rendererURL = "./renderer_vosh/renderer.html";
 // const assetsURL = "../Assets";
 
