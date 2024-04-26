@@ -1,7 +1,8 @@
 
 // const rendererURL = 'http://127.0.0.1:5500/renderer_vosh/renderer.html'
 // const assetsURL = 'https://huggingface.co/zachzhang07/Vosh/resolve/main';
-const assetsURL = 'https://huggingface.co/bit-zyy/Vosh/resolve/main';
+const mipnerf_assetsURL = 'https://huggingface.co/bit-zyy/Vosh-mipnerf/resolve/main';
+const synthetic_assetsURL =  'https://huggingface.co/bit-zyy/Vosh/resolve/main';
 const rendererURL = "./renderer_vosh/renderer.html";
 // const assetsURL = "../Assets";
 
@@ -25,6 +26,11 @@ function handleGoToSceneButtonClick(scenename, is_obj, cas_num){
 
 
 function gotoRenderer(sceneName, version ,quality, is_object, cas_num){
+    var assetsURL = mipnerf_assetsURL;
+    if(is_object === 'true'){
+        assetsURL = synthetic_assetsURL;
+    }
+    console.log(assetsURL);
     var dirUrl = rendererURL + '?dir='+ assetsURL +'/' + sceneName + '_' + version + '/assets' + '&quality=' + quality + '&is_object=' + is_object + '&cas_num=' + cas_num;
     console.log(dirUrl);
     window.open(dirUrl, '_blank');
