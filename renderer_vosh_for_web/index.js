@@ -550,9 +550,23 @@ void main() {
 }
 `;
 
+
+function loadMeshJson(meshUrl){
+    
+    var meshJsonPromise = loadJSONFile(meshUrl + '/' + 'mesh_params.json');
+
+    meshJsonPromise.catch(error => {
+        console.error(
+            'Could not load mesh json from: ' + meshUrl + ', error: ' + error);
+        return;
+    });
+    return Promise.resolve(meshJsonPromise);
+}
+
 function loadMeshAssets(meshUrl, cas_num) {
     console.log("[INFO] loading:", meshUrl);
     let promises = [];
+
 
     for (let cas = 0; cas < cas_num; cas++) {
         let newmat = null;
@@ -629,8 +643,10 @@ function loadMeshAssets(meshUrl, cas_num) {
  * rendering by using a larger step size with decreasing visibility
  * @param {number} nearPlane Distance to the near clipping plane
  */
+
+
 function loadScene(
-    dirUrl, width, height, useLargerStepsWhenOccluded, nearPlane, is_object_data, cas_num) {
+    dirUrl, width, height, useLargerStepsWhenOccluded, nearPlane, is_object_data) {
     // Check if dirUrl points to a json file or to a directory.
     if (dirUrl.includes('.json')) {
         // If this is the case, we fetch a JSON file that maps filenames to links.
@@ -639,7 +655,7 @@ function loadScene(
         // Otherwise, the scene files directly lie at dirUrl and we create a
         // dummy promise that resolves immediately.
         filenameToLinkPromise = Promise.resolve(null);
-    }
+    }   
 
     filenameToLinkPromise.then(filenameToLink => {
         const filenameToLinkTranslator =
@@ -647,8 +663,13 @@ function loadScene(
 
         let meshUrl =
             filenameToLinkTranslator.translate('mesh');
-        let meshPromise = loadMeshAssets(meshUrl, cas_num=cas_num);
-        meshPromise.then(parsed => {
+
+        let meshJsonPromise = loadMeshJson(meshUrl);
+        meshJsonPromise.then(parsed => {
+
+            cas_num = parsed['cas_num'];
+            let meshPromise = loadMeshAssets(meshUrl, cas_num=cas_num);
+            meshPromise.then(parsed => {
             gSceneMeshInVosh = new THREE.Scene();
             // gSceneMeshInVosh.add(parsed[0]);
             for(let i=0;i<parsed.length;i++){
@@ -969,6 +990,7 @@ function loadScene(
                 );
             });
         });
+        });
     });
 }
 
@@ -979,72 +1001,23 @@ function initFromParameters() {
     const params = new URL(window.location.href).searchParams;
     //mip-nerf360 dataset
     // const is_object_data = false;
-    // const cas_num = 3;
 
     //nerf_synthetic dataset
     // const is_object_data = true;
-    // const cas_num = 1;
 
     const dirUrl = params.get('dir');
+    console.log(dirUrl);
     const is_object_data_str = params.get('is_object');
-    const cas_num = params.get('cas_num');
 
     const is_object_data = is_object_data_str === 'true';
-    // const is_object_data = true;
-    // const cas_num = 1;
-    
+
 
     console.log("is_object_data:" + is_object_data);
-    console.log(cas_num);
 
-
-    // const dirUrl = '../Assets/bicycle_base/assets'
-    // const dirUrl = '../Assets/garden_base/assets'
-    // const dirUrl = '../Assets/stump_base/assets'
-    
-    // const dirUrl = '../Assets/bicycle_light/assets'
-    // const dirUrl = '../Assets/garden_light/assets'
-    // const dirUrl = '../Assets/stump_light/assets'
-    // const dirUrl = '../Assets/bicycle_test/assets'
-
-
-
-
-
-    // const dirUrl = '../Assets/chair_light/assets'
-    // const dirUrl = '../Assets/ficus_light/assets'
-    // const dirUrl = '../Assets/mic_light/assets'
-    // const dirUrl = '../Assets/ship_light/assets'
-    // const dirUrl = '../Assets/lego_light/assets'
-    // const dirUrl = '../Assets/materials_light/assets'
-    // const dirUrl = '../Assets/hotdog_light/assets'
-    // const dirUrl = '../Assets/drums_light/assets'
-    
-    
-    // const dirUrl = '../Assets/chair_base/assets'
-    // const dirUrl = '../Assets/ficus_base/assets'
-    // const dirUrl = '../Assets/mic_base/assets'
-    // const dirUrl = '../Assets/ship_base/assets'
-    // const dirUrl = '../Assets/lego_base/assets'
-    // const dirUrl = '../Assets/materials_base/assets'
-    // const dirUrl = '../Assets/hotdog_base/assets'
-    // const dirUrl = '../Assets/drums_base/assets'
-
-    // const dirUrl = '../Assets/chair_base_old/assets'
-    // const dirUrl = '../Assets/bicycle_test/assets'
-    // const dirUrl = '../Assets/stump_test/assets'
-
-    // const dirUrl = '../Assets/lego_small_light/assets'
-    // const dirUrl = '../Assets/ficus_small_light/assets'
-    // const dirUrl = '../Assets/ship_small_light/assets'
-    // const dirUrl = '../Assets/hotdog_small_light/assets'
 
     const size = params.get('s');
 
     const quality = params.get('quality');
-    // const quality = 'low';  // phone, low, medium, high
-    // const quality = 'medium';
-    // const quality = 'high';
 
 
     const stepMult = params.get('stepMult');
@@ -1066,11 +1039,7 @@ function initFromParameters() {
     // Default to filling the browser window, and rendering at full res.
     let frameBufferWidth = window.innerWidth - 46;  // Body has a padding of 20x, we have a border of 3px.
     let frameBufferHeight = window.innerHeight - 46;
-    // let lowResFactor = parseInt(params.get('downscale') || 1, 10);
 
-
-    // frameBufferWidth = 1920;
-    // frameBufferHeight = 1080;
 
 
     if (size) {
@@ -1173,8 +1142,7 @@ function initFromParameters() {
         dirUrl, Math.trunc(view.offsetWidth),
         Math.trunc(view.offsetHeight), useLargerStepsWhenOccluded,
         nearPlane,
-        is_object_data,
-        cas_num);
+        is_object_data);
 }
 
 /**
@@ -1321,7 +1289,7 @@ function update(
     // updateFPSCounter();
     requestAnimationFrame(
         t => update(
-            t, dirUrl, filenameToLinkTranslator, useSparseGrid, sceneParams));
+            t, dirUrl, filenameToLinkTranslator, useSparseGrid, sceneParams, cas_num));
 }
 
 
