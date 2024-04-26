@@ -597,6 +597,7 @@ function loadMeshAssets(meshUrl, cas_num) {
                         displayMode: {'value': gDisplayMode - 0},
                     },
                     glslVersion: THREE.GLSL3,
+                    shading: THREE.SmoothShading
                 });
                 voshmat.needsUpdate = true;
 
@@ -945,6 +946,7 @@ function loadScene(
                     vertexShader: rayMarchVertexShader,
                     fragmentShader: fragmentShaderSource,
                     vertexColors: true,
+                    
                 });
                 rayMarchMaterial.side = THREE.DoubleSide;
                 rayMarchMaterial.depthTest = false;
@@ -1004,6 +1006,10 @@ function initFromParameters() {
     // const dirUrl = '../Assets/garden_light/assets'
     // const dirUrl = '../Assets/stump_light/assets'
     // const dirUrl = '../Assets/bicycle_test/assets'
+
+
+
+
 
     // const dirUrl = '../Assets/chair_light/assets'
     // const dirUrl = '../Assets/ficus_light/assets'
@@ -1128,7 +1134,7 @@ function initFromParameters() {
         stencil: false,
         precision: 'mediump',
         depth: false,
-        antialias: false,
+        antialias: true,
         desynchronized: true
     });
     // gRenderer.gammaOutput = true;

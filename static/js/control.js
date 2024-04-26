@@ -3,7 +3,7 @@
 // const assetsURL = 'https://huggingface.co/zachzhang07/Vosh/resolve/main';
 const mipnerf_assetsURL = 'https://huggingface.co/bit-zyy/Vosh-mipnerf/resolve/main';
 const synthetic_assetsURL =  'https://huggingface.co/bit-zyy/Vosh-synthetic/resolve/main';
-const rendererURL = "./renderer_vosh/renderer.html";
+const rendererURL = "./renderer_vosh_for_web/renderer.html";
 // const assetsURL = "../Assets";
 
 
